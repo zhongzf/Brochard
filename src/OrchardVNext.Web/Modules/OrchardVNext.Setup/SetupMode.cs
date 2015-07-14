@@ -1,13 +1,13 @@
 ﻿using OrchardVNext.Mvc.Routes;
-using Microsoft.Framework.DependencyInjection;
 using OrchardVNext.Mvc;
+using Autofac;
 
 namespace OrchardVNext.Setup {
-    public class SetupMode : IModule {
-        public void Configure(IServiceCollection serviceCollection) {
-            new MvcModule().Configure(serviceCollection);
+    public class SetupMode : Module {
+        protected override void Load(ContainerBuilder builder) {
+            builder.RegisterModule<MvcModule>();
 
-            serviceCollection.AddScoped<IRoutePublisher, RoutePublisher>();
+            builder.RegisterType<RoutePublisher>().As<IRoutePublisher>().InstancePerLifetimeScope();
         }
     }
 }

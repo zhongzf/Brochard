@@ -1,11 +1,9 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
+using Autofac;
+using Autofac.Dnx;
 using Microsoft.AspNet.Builder;
 using Microsoft.Framework.DependencyInjection;
 using Microsoft.Framework.Logging;
-using Microsoft.Framework.Runtime;
 using Microsoft.Framework.Runtime.Caching;
 using OrchardVNext.Environment.Configuration;
 using OrchardVNext.Environment.Extensions;
@@ -31,7 +29,7 @@ namespace OrchardVNext.Environment {
             services.AddInstance<ICacheContextAccessor>(new CacheContextAccessor());
             services.AddSingleton<ICache, Cache>();
 
-            services.AddTransient<IOrchardHost, DefaultOrchardHost>();
+            services.AddSingleton<IOrchardHost, DefaultOrchardHost>();
             {
                 services.AddSingleton<IShellSettingsManager, ShellSettingsManager>();
 
@@ -54,12 +52,18 @@ namespace OrchardVNext.Environment {
                     services.AddSingleton<IShellContainerFactory, ShellContainerFactory>();
                 }
             }
-                
-            services.AddTransient<IOrchardShellHost, DefaultOrchardShellHost>();
-                
-            services.AddInstance<IRuntimeServices>(new ServiceManifest(services));
 
-            return services.BuildServiceProvider();
+            services.AddTransient<IOrchardShellHost, DefaultOrchardShellHost>();
+
+            var builder = new ContainerBuilder();
+            
+            builder.Populate(services);
+
+            builder.RegisterType<DefaultOrchardShell>().As<IOrchardShell>().InstancePerMatchingLifetimeScope("shell");
+
+            var container = builder.Build();
+
+            return container.Resolve<IServiceProvider>();
         }
 
         public static IOrchardHost CreateHost(IApplicationBuilder app, ILoggerFactory loggerFactory) {
@@ -69,24 +73,10 @@ namespace OrchardVNext.Environment {
             app.UseMiddleware<OrchardShellHostMiddleware>();
 
             // Think this needs to be inserted in a different part of the pipeline, possibly
-            // dhen DI is created for the shell
+            // when DI is created for the shell
             app.UseMiddleware<OrchardRouterMiddleware>();
             
             return app.ApplicationServices.GetService<IOrchardHost>();
         }
-    }
-
-    public class ServiceManifest : IRuntimeServices {
-        public ServiceManifest(IServiceCollection fallback) {
-
-            var manifestTypes = fallback.Where(t => t.ServiceType.GetTypeInfo().GenericTypeParameters.Length == 0
-                    && t.ServiceType != typeof(IRuntimeServices)
-                    && t.ServiceType != typeof(IServiceProvider))
-                    .Select(t => t.ServiceType).Distinct();
-
-            Services = manifestTypes;
-        }
-
-        public IEnumerable<Type> Services { get; private set; }
     }
 }

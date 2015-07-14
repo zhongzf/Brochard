@@ -1,29 +1,31 @@
 {
-    "version": "2.0.0-*",
-    "dependencies": {
-        "Microsoft.AspNet.Mvc": "6.0.0-*",
-        "Microsoft.Framework.Runtime": "1.0.0-*",
-        "Microsoft.Framework.Runtime.Roslyn.Common": "1.0.0-*",
-        "Microsoft.Framework.Runtime.Roslyn": "1.0.0-*",
-        "Microsoft.Framework.Configuration": "1.0.0-*",
-        "Microsoft.Framework.Configuration.Json": "1.0.0-*",
-        "Microsoft.Framework.Configuration.Xml": "1.0.0-*",
-        "Microsoft.Framework.PackageManager": "1.0.0-*",
-        "EntityFramework.Core": "7.0.0-*",
-        "EntityFramework.SqlServer": "7.0.0-*",
-        "EntityFramework.InMemory": "7.0.0-*",
-        "Nito.AsyncEx": "3.0.1-pre"
-        },
-    "compilationOptions": { "define": [ "TRACE" ], "warningsAsErrors": true },
-    "frameworks": {
-        "dnx451": { },
-        "dnxcore50": {
-            "dependencies": {
-                "System.Runtime": "4.0.20-*",
-                "System.Xml.XDocument": "4.0.10-*",
-                "System.IO.FileSystem.Primitives": "4.0.0-*",
-                "System.Console": "4.0.0-*"
-            }
-        }
+  "version": "2.0.0-*",
+  "dependencies": {
+    "Microsoft.AspNet.Mvc": "6.0.0-*",
+    "Microsoft.Framework.Runtime": "1.0.0-*",
+    "Microsoft.Framework.Runtime.Roslyn.Common": "1.0.0-*",
+    "Microsoft.Framework.Runtime.Roslyn": "1.0.0-*",
+    "Microsoft.Framework.Configuration": "1.0.0-*",
+    "Microsoft.Framework.Configuration.Json": "1.0.0-*",
+    "Microsoft.Framework.Configuration.Xml": "1.0.0-*",
+    "Microsoft.Framework.PackageManager": "1.0.0-*",
+    "EntityFramework.Core": "7.0.0-*",
+    "EntityFramework.SqlServer": "7.0.0-*",
+    "EntityFramework.InMemory": "7.0.0-*",
+    "Nito.AsyncEx": "3.0.1-pre",
+    "Autofac": "4.0.0-*",
+    "Autofac.Dnx": "4.0.0-*"
+  },
+  "compilationOptions": { "define": [ "TRACE" ], "warningsAsErrors": true },
+  "frameworks": {
+    "dnx451": { },
+    "dnxcore50": {
+      "dependencies": {
+        "System.Runtime": "4.0.20-*",
+        "System.Xml.XDocument": "4.0.10-*",
+        "System.IO.FileSystem.Primitives": "4.0.0-*",
+        "System.Console": "4.0.0-*"
+      }
     }
+  }
 }

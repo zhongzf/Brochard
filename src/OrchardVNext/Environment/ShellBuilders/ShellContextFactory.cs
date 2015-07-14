@@ -38,14 +38,16 @@ namespace OrchardVNext.Environment.ShellBuilders {
             Logger.Information("Creating shell context for tenant {0}", settings.Name);
 
             var blueprint = _compositionStrategy.Compose(settings, MinimumShellDescriptor());
-            var provider = _shellContainerFactory.CreateContainer(settings, blueprint);
+            var shellScope = _shellContainerFactory.CreateContainer(settings, blueprint);
+
+            var p = shellScope.GetRequiredService<IWorkContextAccessor>().CreateWorkContextScope();
 
             try {
                 return new ShellContext {
                     Settings = settings,
                     Blueprint = blueprint,
-                    LifetimeScope = provider,
-                    Shell = provider.GetRequiredService<IOrchardShell>()
+                    LifetimeScope = shellScope,
+                    Shell = shellScope.GetRequiredService<IOrchardShell>()
                 };
             }
             catch (Exception ex) {
@@ -84,7 +86,7 @@ namespace OrchardVNext.Environment.ShellBuilders {
                 Settings = settings,
                 Blueprint = blueprint,
                 LifetimeScope = provider,
-                Shell = provider.GetService<IOrchardShell>()
+                Shell = provider.GetRequiredService<IOrchardShell>()
             };
         }
     }

@@ -106,7 +106,7 @@ namespace OrchardVNext.Environment.ShellBuilders
         }
         
         private static bool IsModule(Type type) {
-            return typeof (IModule).IsAssignableFrom(type);
+            return typeof (Autofac.Core.IModule).IsAssignableFrom(type);
         }
 
         private static DependencyBlueprint BuildModule(Type type, Feature feature) {

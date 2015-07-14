@@ -12,6 +12,14 @@ using OrchardVNext.Environment.Extensions.Loaders;
 using OrchardVNext.Environment.ShellBuilders.Models;
 using OrchardVNext.Mvc;
 using OrchardVNext.Routing;
+using Autofac.Builder;
+using Autofac;
+using Autofac.Dnx;
+using Autofac.Core;
+using Autofac.Features.Indexed;
+using Microsoft.AspNet.Mvc.Razor;
+using Microsoft.Framework.OptionsModel;
+
 #if DNXCORE50
 using System.Reflection;
 #endif
@@ -24,103 +32,89 @@ namespace OrchardVNext.Environment.ShellBuilders {
     public class ShellContainerFactory : IShellContainerFactory
     {
         private readonly IServiceProvider _serviceProvider;
+        private readonly ILifetimeScope _lifetimeScope;
 
-        public ShellContainerFactory(IServiceProvider serviceProvider) {
+        public ShellContainerFactory(IServiceProvider serviceProvider,
+            ILifetimeScope lifetimeScope) {
             _serviceProvider = serviceProvider;
+            _lifetimeScope = lifetimeScope;
         }
 
         public IServiceProvider CreateContainer(ShellSettings settings, ShellBlueprint blueprint)
         {
-            ServiceCollection serviceCollection = new ServiceCollection();
+            var intermediateScope = _lifetimeScope.BeginLifetimeScope(
+                builder => {
+                    foreach (var item in blueprint.Dependencies.Where(t => typeof(IModule).IsAssignableFrom(t.Type))) {
+                        var registration = RegisterType(builder, item)
+                            .Keyed<IModule>(item.Type)
+                            .InstancePerDependency();
 
-            serviceCollection.AddScoped<IOrchardShell, DefaultOrchardShell>();
-            serviceCollection.AddScoped<IRouteBuilder, DefaultShellRouteBuilder>();
-            serviceCollection.AddInstance(settings);
-            serviceCollection.AddInstance(blueprint.Descriptor);
-            serviceCollection.AddInstance(blueprint);
-            
-            foreach (var dependency in blueprint.Dependencies
-                .Where(t => typeof (IModule).IsAssignableFrom(t.Type))) {
-
-                Logger.Debug("IModule Type: {0}", dependency.Type);
-
-                // TODO: Rewrite to get rid of reflection.
-                var instance = (IModule) Activator.CreateInstance(dependency.Type);
-                instance.Configure(serviceCollection);
-            }
-
-            var p = _serviceProvider.GetService<IOrchardLibraryManager>();
-            serviceCollection.AddInstance<IAssemblyProvider>(new OrchardMvcAssemblyProvider(p, _serviceProvider, _serviceProvider.GetService<IAssemblyLoaderContainer>()));
-
-            foreach (var dependency in blueprint.Dependencies
-                .Where(t => !typeof(IModule).IsAssignableFrom(t.Type)))
-            {
-                foreach (var interfaceType in dependency.Type.GetInterfaces()
-                    .Where(itf => typeof(IDependency).IsAssignableFrom(itf)))
-                {
-                    Logger.Debug("Type: {0}, Interface Type: {1}", dependency.Type, interfaceType);
-
-                    if (typeof(ISingletonDependency).IsAssignableFrom(interfaceType))
-                    {
-                        serviceCollection.AddSingleton(interfaceType, dependency.Type);
+                        foreach (var parameter in item.Parameters) {
+                            registration = registration
+                                .WithParameter(parameter.Name, parameter.Value)
+                                .WithProperty(parameter.Name, parameter.Value);
+                        }
                     }
-                    else if (typeof(IUnitOfWorkDependency).IsAssignableFrom(interfaceType))
-                    {
-                        serviceCollection.AddScoped(interfaceType, dependency.Type);
-                    }
-                    else if (typeof(ITransientDependency).IsAssignableFrom(interfaceType))
-                    {
-                        serviceCollection.AddTransient(interfaceType, dependency.Type);
-                    }
-                    else
-                    {
-                        serviceCollection.AddScoped(interfaceType, dependency.Type);
-                    }
-                }
-            }
+                });
 
-            serviceCollection.AddLogging();
+            return intermediateScope
+                .BeginLifetimeScope(
+                    "shell",
+                    builder => {
+                        builder.RegisterType<DefaultShellRouteBuilder>().As<IRouteBuilder>().InstancePerLifetimeScope();
+                        builder.Register(ctx => settings);
+                        builder.Register(ctx => blueprint.Descriptor);
+                        builder.Register(ctx => blueprint);
 
-            return new WrappingServiceProvider(_serviceProvider, serviceCollection);
+                        var moduleIndex = intermediateScope.Resolve<IIndex<Type, IModule>>();
+                        foreach (
+                            var item in blueprint.Dependencies.Where(t => typeof (IModule).IsAssignableFrom(t.Type))) {
+                            builder.RegisterModule(moduleIndex[item.Type]);
+                        }
+
+                        foreach (
+                            var item in blueprint.Dependencies.Where(t => typeof (IDependency).IsAssignableFrom(t.Type))
+                            ) {
+                            var registration = RegisterType(builder, item)
+                                .InstancePerLifetimeScope();
+
+                            foreach (var interfaceType in item.Type.GetInterfaces()
+                                .Where(itf => typeof (IDependency).IsAssignableFrom(itf))) {
+
+                                Logger.Debug("Type: {0}, Interface Type: {1}", item.Type, interfaceType);
+
+                                registration = registration.As(interfaceType).AsSelf();
+                                if (typeof (ISingletonDependency).IsAssignableFrom(interfaceType)) {
+                                    registration = registration.InstancePerMatchingLifetimeScope("shell");
+                                }
+                                else if (typeof (IUnitOfWorkDependency).IsAssignableFrom(interfaceType)) {
+                                    registration = registration.InstancePerMatchingLifetimeScope("work");
+                                }
+                                else if (typeof (ITransientDependency).IsAssignableFrom(interfaceType)) {
+                                    registration = registration.InstancePerDependency();
+                                }
+                            }
+
+                            foreach (var parameter in item.Parameters) {
+                                registration = registration
+                                    .WithParameter(parameter.Name, parameter.Value)
+                                    .WithProperty(parameter.Name, parameter.Value);
+                            }
+                        }
+
+                        /* Get rid of this */
+                        //ServiceCollection services = new ServiceCollection();
+                        //services.AddLogging();
+                        //builder.Populate(services);
+                        /*******************/
+                    })
+                .Resolve<IServiceProvider>();
         }
-
-        private class WrappingServiceProvider : IServiceProvider
-        {
-            private readonly IServiceProvider _services;
-
-            // Need full wrap for generics like IOptions
-            public WrappingServiceProvider(IServiceProvider fallback, IServiceCollection replacedServices)
-            {
-                var services = new ServiceCollection();
-                var manifest = fallback.GetRequiredService<IRuntimeServices>();
-                foreach (var service in manifest.Services) {
-                    services.AddTransient(service, sp => fallback.GetService(service));
-                }
-                
-                services.AddSingleton<IRuntimeServices>(sp => new HostingManifest(services));
-                services.Add(replacedServices);
-
-                _services = services.BuildServiceProvider();
-            }
-
-            public object GetService(Type serviceType) {
-                return _services.GetService(serviceType);
-            }
-
-
-            // Manifest exposes the fallback manifest in addition to ITypeActivator, IHostingEnvironment, and ILoggerFactory
-            private class HostingManifest : IRuntimeServices {
-                public HostingManifest(IServiceCollection hostServices) {
-                    Services = new Type[] {
-                    typeof(IHostingEnvironment),
-                    typeof(ILoggerFactory),
-                    typeof(IHttpContextAccessor),
-                    typeof(IApplicationLifetime)
-                }.Concat(hostServices.Select(s => s.ServiceType)).Distinct();
-                }
-
-                public IEnumerable<Type> Services { get; private set; }
-            }
+        
+        private IRegistrationBuilder<object, ConcreteReflectionActivatorData, SingleRegistrationStyle> RegisterType(ContainerBuilder builder, ShellBlueprintItem item) {
+            return builder.RegisterType(item.Type)
+                .WithProperty("Feature", item.Feature)
+                .WithMetadata("Feature", item.Feature);
         }
     }
 }
