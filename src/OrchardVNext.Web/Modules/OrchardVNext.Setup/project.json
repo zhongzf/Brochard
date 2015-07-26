@@ -3,7 +3,7 @@
     "dependencies": {
       "Microsoft.AspNet.Mvc": "6.0.0-*",
        "Autofac": "4.0.0-*",
-       "Autofac.Dnx": "4.0.0-*",
+       "Autofac.Framework.DependencyInjection": "4.0.0-*",
        "OrchardVNext": "2.0.0-*"
     },
     "compilationOptions": { "define": [ "TRACE" ], "warningsAsErrors": true },

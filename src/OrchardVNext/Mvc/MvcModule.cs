@@ -1,10 +1,8 @@
 using Autofac;
-using Autofac.Dnx;
+using Autofac.Framework.DependencyInjection;
 using Microsoft.AspNet.Mvc;
-using Microsoft.AspNet.Mvc.Razor;
 using Microsoft.AspNet.Mvc.Razor.Compilation;
 using Microsoft.Framework.DependencyInjection;
-using Microsoft.Framework.OptionsModel;
 using OrchardVNext.Mvc.Razor;
 
 namespace OrchardVNext.Mvc {

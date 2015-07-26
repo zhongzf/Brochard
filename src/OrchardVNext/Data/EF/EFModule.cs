@@ -1,5 +1,5 @@
 using Autofac;
-using Autofac.Dnx;
+using Autofac.Framework.DependencyInjection;
 using Microsoft.Framework.DependencyInjection;
 
 namespace OrchardVNext.Data.EF {

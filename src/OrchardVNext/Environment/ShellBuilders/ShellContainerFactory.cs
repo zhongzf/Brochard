@@ -1,24 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using Microsoft.AspNet.Hosting;
-using Microsoft.AspNet.Mvc;
 using Microsoft.AspNet.Routing;
-using Microsoft.Framework.DependencyInjection;
-using Microsoft.Framework.Logging;
-using Microsoft.Framework.Runtime;
 using OrchardVNext.Environment.Configuration;
-using OrchardVNext.Environment.Extensions.Loaders;
 using OrchardVNext.Environment.ShellBuilders.Models;
-using OrchardVNext.Mvc;
 using OrchardVNext.Routing;
 using Autofac.Builder;
 using Autofac;
-using Autofac.Dnx;
 using Autofac.Core;
 using Autofac.Features.Indexed;
-using Microsoft.AspNet.Mvc.Razor;
-using Microsoft.Framework.OptionsModel;
 
 #if DNXCORE50
 using System.Reflection;

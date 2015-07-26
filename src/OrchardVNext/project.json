@@ -14,7 +14,7 @@
     "EntityFramework.InMemory": "7.0.0-*",
     "Nito.AsyncEx": "3.0.1-pre",
     "Autofac": "4.0.0-*",
-    "Autofac.Dnx": "4.0.0-*"
+    "Autofac.Framework.DependencyInjection": "4.0.0-*"
   },
   "compilationOptions": { "define": [ "TRACE" ], "warningsAsErrors": true },
   "frameworks": {
