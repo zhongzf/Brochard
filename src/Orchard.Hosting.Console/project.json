@@ -1,0 +1,27 @@
+﻿{
+  "version": "2.0.0-*",
+  "dependencies": {
+    "Microsoft.AspNet.Hosting": "1.0.0-*",
+    "Microsoft.Extensions.DependencyInjection.Abstractions": "1.0.0-*",
+    "Orchard.Environment.Commands": "2.0.0-*",
+    "Orchard.Hosting": "2.0.0-*"
+  },
+  "compilationOptions": {
+    "define": [ "TRACE" ],
+    "warningsAsErrors": true
+  },
+  "commands": {
+    "console": "Orchard.Hosting.CommandConsole"
+  },
+  "frameworks": {
+    "dnxcore50": {
+      "dependencies": {
+        "System.Console": "4.0.0-*"
+      }
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/OrchardCMS/Orchard2"
+  }
+}

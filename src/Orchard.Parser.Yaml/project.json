@@ -1,0 +1,20 @@
+﻿{
+  "version": "2.0.0-*",
+  "dependencies": {
+    "Microsoft.Extensions.Configuration": "1.0.0-*",
+    "Microsoft.Extensions.Configuration.Abstractions": "1.0.0-*",
+    "Microsoft.Extensions.Configuration.FileExtensions": "1.0.0-*",
+    "YamlDotNet": "3.7.0"
+  },
+  "compilationOptions": {
+    "define": [ "TRACE" ],
+    "warningsAsErrors": true
+  },
+  "frameworks": {
+    "dnxcore50": { }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/OrchardCMS/Orchard2"
+  }
+}

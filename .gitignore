@@ -170,6 +170,8 @@ src/Orchard.Web/Media/*
 log.xml
 profiling/
 *.orig
+.vs/
+.vscode/
 
 
 nuget.exe
